@@ -1,0 +1,195 @@
+---
+title: 'Bellabeat data analysis'
+author: "Oswaldo Leyva"
+date: "2023-03-23"
+output: html_document
+---
+## Bellabeat smart device data analysis
+
+This project is about the company Bellabeat, a high-tech manufacturer of health-focused products for women. Bellabeat is a successful small company, but they have the potential to become a larger player in the global smart device market. 
+Urška Sršen and Sando Mur founded Bellabeat, Sršen used her background as an artist to develop beautifully designed technology that informs and inspires women around the world. Collecting data on activity, sleep, stress, and reproductive health has allowed Bellabeat to empower women with knowledge about their own health and habits. Since it was founded in 2013, Bellabeat has grown rapidly and quickly positioned itself as a tech-driven wellness company for women.
+By 2016, Bellabeat had opened offices around the world and launched multiple products. Bellabeat products became available through a growing number of online retailers in addition to their own e-commerce channel on their website. The company has invested in traditional advertising media, such as radio, out-of-home billboards, print, and television, but focuses on digital marketing extensively. Bellabeat invests year-round in Google Search, maintaining active Facebook and Instagram pages, and consistently engages consumers on Twitter. Additionally, Bellabeat runs video ads on Youtube and displays ads on the Google Display Network to support campaigns around key marketing dates.
+Sršen knows that an analysis of Bellabeat’s available consumer data would reveal more opportunities for growth. She has asked the marketing analytics team to focus on a Bellabeat product and analyze smart device usage data in order to gain insight into how people are already using their smart devices. Then, using this information, she would like high-level recommendations for how these trends can inform Bellabeat marketing strategy.
+
+### Motivation for the analysis 
+
+Urška Sršen, cofounder and Chief Creative Officer of Bellabeat, believes that analyzing smart device fitness data could help unlock new growth opportunities for the company. 
+
+### Stakeholder's instructions 
+
+Focus on one of Bellabeat’s products and analyze smart device data to gain insight into how consumers are using their smart devices. These insights discovered will then help guide marketing strategy for the company. The analysis will be presented to the Bellabeat executive team along with the high-level recommendations for Bellabeat’s marketing strategy.
+The principal questions to solve are:
+
+1. What are some trends in smart device usage?
+2. How could these trends apply to Bellabeat customers?
+3. How could these trends help influence Bellabeat marketing strategy?
+
+### First project stage   
+
+The first step was to access the data from the Kaggle website. This data included different types of measures for parameters such as (daily steps, calories, type of activity, time in bed, time asleep, and so on). The data was previously checked out on spreadsheets to have an idea of the content of every dataset available, after that it was decided to focus just on 4 datasets.
+
+```{r}
+dailyActivity <- read.csv("case_study/dailyActivity_merged.csv")
+heartrate <- read.csv("FitabaseData/heartrate_seconds_merged.csv")
+sleepday <- read.csv("FitabaseData/sleepDay_merged.csv")
+weight_info <- read.csv("FitabaseData/weightLogInfo_merged.csv")
+```
+
+The main dataset for this study is the daily activity as it contains every day data for almost two months for 33 different persons.
+The others datasets did not offer the same quantity and quality of data as the mentioned above. 
+
+Once the data was imported, the libraries needed for data analysis were downloaded and loaded when necessary.  
+
+### Libraries needed for data analysis
+
+```{r message=FALSE, warning=FALSE}
+options(repos = c(CRAN = "http://cran.rstudio.com"))
+install.packages("tidyverse")
+library("tidyverse")
+install.packages("janitor")
+library("janitor")
+install.packages("dplyr")
+library("dplyr")
+install.packages("tidyr")
+library("tidyr")
+library("ggplot2")
+```
+
+The datasets do not present any NA values that could affect the analysis.
+
+```{r message=FALSE, warning=FALSE}
+summarise_all(dailyActivity, funs(sum(is.na(.))))
+summarise_all(heartrate, funs(sum(is.na(.))))
+summarise_all(sleepday, funs(sum(is.na(.))))
+summarise_all(weight_info, funs(sum(is.na(.))))
+```
+
+After checking  the data out, it was decided that the better option was to group by ID the four datasets and generate a summary table to know basic statistical values. 
+
+```{r message=FALSE, warning=FALSE}
+heart_rate_grouped <- heartrate %>% 
+  group_by(Id) %>% 
+  distinct(Id, .keep_all = TRUE) %>% 
+  summarize(avg_HR = mean(Value)) 
+summary(heart_rate_grouped)
+ggplot(heart_rate_grouped,aes(x=Id,y=avg_HR))+
+  geom_boxplot( )
+```
+
+To analyze the heartate values it was necessary to know the average heart rate for adults. A normal resting heart rate for adults ranges from 60 to 100 beats per minute. Generally, a lower heart rate at rest implies more efficient heart function and better cardiovascular fitness. For example, a well-trained athlete might have a normal resting heart rate closer to 40 beats per minute.[click here](https://www.mayoclinic.org/healthy-lifestyle/fitness/expert-answers/heart-rate/faq-20057979#:~:text=A%20normal%20resting%20heart%20rate%20for%20adults%20ranges,measure%20your%20heart%20rate%2C%20simply%20check%20your%20pulse.)
+Keep in mind that many factors can influence heart rate, including:
+
+Age, Fitness and activity levels, Being a smoker, Having cardiovascular disease, high cholesterol or diabetes, Air temperature, Body position (standing up or lying down, for example), Emotions, Body size, Medications
+
+According to this information, the average Heart rate for this sample of 33 individuals is between the normal range, to better conclude it will need more information about every person in the dataset.
+
+```{r}
+dailyActivity_grouped <- dailyActivity %>% 
+  group_by(Id) %>% 
+  distinct(Id, .keep_all = TRUE) %>% 
+  summarize(avg_totalsteps = mean(TotalSteps),
+            avg_totaldistance = mean(TotalDistance),
+            avg_trackerdistance = mean(TrackerDistance),
+            avg_veryactivedistance = mean(VeryActiveDistance),
+            avg_moderatelyactivedistance = mean(ModeratelyActiveDistance),
+            avg_lightactivedistance = mean(LightActiveDistance),
+            avg_sedentaryactivedistance = mean(SedentaryActiveDistance),
+            avg_very_active_minutes = mean(VeryActiveMinutes),
+            avg_moderate_active = mean(FairlyActiveMinutes)+mean(LightlyActiveMinutes),
+            avg_sedentary_minutes = mean(SedentaryMinutes),
+            avg_calories = mean(Calories))
+summary(dailyActivity_grouped)
+```
+
+The minimum daily steps for better health are 7,500 in this sample the average registered was 8,237 this means in general the people here fulfill with the amount suggested.[Click here](https://www.nih.gov/news-events/nih-research-matters/how-many-steps-better-health)
+
+To better analyze the daily data information a classification was implemented, as follows.
+There are two different ways to complete the physical activity for an adult between 18 and 64 years old. A person can achieve the necessary by doing 75-150 minutes of physical intense activities or between 150-300 minutes of moderate activities. [Click here](https://www.who.int/es/news-room/fact-sheets/detail/physical-activity)
+
+In the present dataset there is no information about the ages of the people, so it is supposed every Id corresponds to an adult between 18 to 64 years old. The activity classified as minutes very active was taken as intense physical activity and the fairly active minutes plus lightly active minutes were taken as moderate activity. For this study there are two ways of fulfilling the minutes a person needs to have good health. 
+
+1- By doing at least 150 minutes per day of moderate activity.
+2- By doing at least 75 minutes per day of intense activity.
+
+
+```{r}
+activity_classication <- dailyActivity_grouped %>%
+  mutate(high_activity = case_when(
+    avg_very_active_minutes < 75 ~ "need more activity",
+    avg_very_active_minutes >= 75 & avg_very_active_minutes < 150 ~ "average activity", 
+    avg_very_active_minutes >= 150 ~ "very good activity")) %>%
+  mutate(moderate_activity = case_when(   
+    avg_moderate_active < 150 ~ "low activity",
+    avg_moderate_active >= 150 & avg_moderate_active < 300 ~ "normal activity", 
+    avg_moderate_active >= 300 ~ "high activity",
+  ))
+
+```
+
+```{r message=FALSE, warning=FALSE}
+ggplot(activity_classication,aes(x=Id,y=avg_moderate_active,color=moderate_activity))+
+  geom_jitter( )
+
+ggplot(activity_classication,aes(x=Id,y=high_activity,color=high_activity))+
+  geom_jitter( )
+
+ggplot(activity_classication)+
+  geom_smooth(aes(y=avg_calories,x=avg_trackerdistance))
+
+```
+
+The graphs obtained with the classification showed that, based on the intense activity the sample here should be doing more exercise, but if it is considered the moderate activity the majority of the sample is in the normal physical activity for an adult. 
+This means the sample has an average physical activity per day, but to perform a better analysis the device could ask people to put some general information such as: age, weight and BMI.
+
+The last graph shows a relationship between the total distance tracked by the device Vs the calories burned, as expected the tendency shows the longest the distance tracked the highest the amount of calories reported. 
+
+```{r}
+sleepday_grouped <- sleepday %>% 
+  group_by(Id) %>% 
+  distinct(Id, .keep_all = TRUE) %>% 
+  summarize(avg_MinutesAsleep = mean(TotalMinutesAsleep),
+            avg_Minutes_inBed = mean(TotalTimeInBed))
+summary(sleepday_grouped)
+```
+```{r message=FALSE, warning=FALSE}
+ggplot(sleepday)+
+  geom_smooth(aes(y=TotalMinutesAsleep,x=TotalTimeInBed))
+```
+
+When comparing the total time in bed Vs time asleep the data showed that almost the time spent in bed is equal to the time asleep, this is a good fact as it showed the population do not waste time before sleep on the smartphone or laptop for example. 
+
+```{r}
+weightInfo_grouped <- weight_info %>% 
+  group_by(Id) %>% 
+  distinct(Id, .keep_all = TRUE) %>% 
+  summarize(avg_weight_Kg = mean(WeightKg),
+            avg_BMI = mean(BMI))
+summary(weightInfo_grouped)
+
+```
+
+This last dataset unfortunately does not offer the same amount of data as the others, so that it was not considered for the analysis.
+
+### Conclusions 
+
+After reviewing the data sets is clear among the sample no everyone uses its smart device in the same manner, but considering the most important aspects monitored by the device the ones included in the daily data set, can be conclude the general users used to take care about important aspects for better health such as: steps and distance covered during a day, the time they spent inactive or sedentary, the time asleep or the calories burned, and finally the physical activity the made per day.
+
+There are several recommendations for improving the device as well as increasing the use people do with their device:
+
++ Setting a quick survey when the user begins to use its device to set things such as: age, gender, weight, height and BMI (if it is known). This will generate more data that can help a lot in future analysis, as mentioned the dataset about weight was the most poor in terms of data amount.
+
++ If possible preloaded different types of exercises to make a better register of the kind of activity made.
+
++ It will be good to set a reminder for the amount of daily steps and the time spent inactive, this will help people to reach the minimum quantity or minimize the time inactive. 
+
++ Another aspect Bellabeat can do is to suggest exercises or activities based on the user interest and needs, this will improve the confidence and thankfulness of general users.
+
++ The last suggestion is to make a good app for the smartphone to improve the records and the exchange of data between users and maybe set some challenges to get the users more involved with their health.
+
+In my personal opinion as a daily user of a smartwatch to record my physical activity the data collected was poor, because nowadays it is pretty easy to track almost every aspect of a day for the users. 
+
+
+
+
+
+
